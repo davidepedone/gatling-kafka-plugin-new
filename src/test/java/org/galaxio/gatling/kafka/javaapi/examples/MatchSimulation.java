@@ -5,6 +5,7 @@ import io.gatling.javaapi.core.Simulation;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.galaxio.gatling.kafka.javaapi.KafkaDsl;
 import org.galaxio.gatling.kafka.javaapi.protocol.KafkaProtocolBuilder;
+import org.galaxio.gatling.kafka.protocol.KafkaProtocol;
 import org.galaxio.gatling.kafka.request.KafkaProtocolMessage;
 
 import java.time.Duration;
@@ -56,6 +57,33 @@ public class MatchSimulation extends Simulation {
             )
             .timeout(Duration.ofSeconds(5))
             .matchByMessage(this::matchByOwnVal);
+
+    private final KafkaProtocolBuilder kafkaProtocolMatchByKafkaMatcher = KafkaDsl.kafka()
+            .producerSettings(
+                    Map.of(
+                            ProducerConfig.ACKS_CONFIG, "1",
+                            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"
+                    )
+            )
+            .consumeSettings(
+                    Map.of(
+                            "bootstrap.servers", "localhost:9092"
+                    )
+            )
+            .timeout(Duration.ofSeconds(5))
+            .matchByKafkaMatcher(new KafkaProtocol.KafkaMatcher() {
+                // here you can fully customize your logic in order to use different properties
+                // for request and response
+                @Override
+                public byte[] requestMatch(KafkaProtocolMessage msg) {
+                    return msg.key();
+                }
+
+                @Override
+                public byte[] responseMatch(KafkaProtocolMessage msg) {
+                    return msg.key();
+                }
+            });
 
     private final AtomicInteger c = new AtomicInteger(0);
     private final Iterator<Map<String, Object>> feeder =

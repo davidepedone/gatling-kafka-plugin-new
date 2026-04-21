@@ -63,6 +63,8 @@ final case class KafkaProtocolBuilder(
     messageMatcher: KafkaMatcher = KafkaKeyMatcher,
 ) {
 
+  def matchByKafkaMatcher(kafkaMatcher: KafkaMatcher): KafkaProtocolBuilder = messageMatcher(kafkaMatcher)
+
   def matchByValue: KafkaProtocolBuilder =
     messageMatcher(KafkaValueMatcher)
 

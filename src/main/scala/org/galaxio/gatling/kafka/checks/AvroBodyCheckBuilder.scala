@@ -24,6 +24,6 @@ object AvroBodyCheckBuilder {
       }
     }.expressionSuccess
 
-    new Find.Default[KafkaMessageCheckType, KafkaProtocolMessage, T](tExtractor, displayActualValue = true)
+    new Find.Default[KafkaMessageCheckType, KafkaProtocolMessage, T](tExtractor, logActualValueInError = true)
   }
 }

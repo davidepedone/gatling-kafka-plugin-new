@@ -13,6 +13,7 @@ import org.apache.kafka.common.header.Headers
 import org.apache.kafka.common.header.internals.RecordHeaders
 import org.apache.kafka.common.serialization.{Deserializer, Serde, Serializer}
 import org.galaxio.gatling.kafka.protocol.KafkaProtocol
+import org.galaxio.gatling.kafka.protocol.KafkaProtocol.KafkaMatcher
 import org.galaxio.gatling.kafka.request.KafkaProtocolMessage
 
 import scala.concurrent.duration.DurationInt
@@ -119,6 +120,25 @@ class KafkaGatlingTest extends Simulation {
     )
     .timeout(7.seconds)
     .matchByMessage(matchByOwnVal)
+
+  val kafkaProtocolRRAvroCustomMatcher: KafkaProtocol = kafka
+    .producerSettings(
+      ProducerConfig.ACKS_CONFIG                   -> "1",
+      ProducerConfig.BOOTSTRAP_SERVERS_CONFIG      -> "localhost:9093",
+      ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG   -> "org.apache.kafka.common.serialization.StringSerializer",
+      ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG -> "io.confluent.kafka.serializers.KafkaAvroSerializer",
+      "value.subject.name.strategy"                -> "io.confluent.kafka.serializers.subject.RecordNameStrategy",
+      "schema.registry.url"                        -> "http://localhost:9094",
+    )
+    .consumeSettings(
+      "bootstrap.servers" -> "localhost:9093",
+    )
+    .timeout(7.seconds)
+    .matchByKafkaMatcher(new KafkaMatcher {
+      override def requestMatch(msg: KafkaProtocolMessage): Array[Byte] = msg.key
+
+      override def responseMatch(msg: KafkaProtocolMessage): Array[Byte] = msg.key
+    })
 
   val scnRR: ScenarioBuilder = scenario("RequestReply String")
     .exec(

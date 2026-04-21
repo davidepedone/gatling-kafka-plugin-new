@@ -47,6 +47,30 @@ class MatchSimulation : Simulation() {
         .timeout(Duration.ofSeconds(5))
         .matchByMessage { message: KafkaProtocolMessage -> matchByOwnVal(message) }
 
+    private val kafkaProtocolMatchByKafkaMatcher = kafka().requestReply()
+        .producerSettings(
+            mapOf<String, Any>(
+                ProducerConfig.ACKS_CONFIG to "1",
+                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to "localhost:9092"
+            )
+        )
+        .consumeSettings(
+            mapOf<String, Any>(
+                "bootstrap.servers" to "localhost:9092"
+            )
+        )
+        .timeout(Duration.ofSeconds(5))
+        .matchByKafkaMatcher(object : KafkaMatcher {
+            // here you can fully customize your logic in order to use different properties
+            // for request and response
+            override fun requestMatch(msg: KafkaProtocolMessage): ByteArray {
+                return msg.key
+            }
+            override fun responseMatch(msg: KafkaProtocolMessage): ByteArray {
+                return msg.key
+            }
+        })
+
     private val c = AtomicInteger(0)
 
     private val feeder = generateSequence {
